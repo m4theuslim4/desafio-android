@@ -1,4 +1,4 @@
-package com.picpay.desafio.android.data.api
+package com.picpay.desafio.android.data.network
 
 import com.picpay.desafio.android.data.model.User
 import retrofit2.Call
