@@ -9,8 +9,8 @@ import androidx.room.Query
 interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(vararg users: UserEntity)
+    fun insertAll(users: List<UserLocalData>)
 
     @Query("SELECT * FROM user")
-    fun getUsers(): List<UserEntity>
+    fun getUsers(): List<UserLocalData>
 }
