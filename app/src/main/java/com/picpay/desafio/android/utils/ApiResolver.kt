@@ -3,38 +3,49 @@ package com.picpay.desafio.android.utils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.HttpException
 import retrofit2.Response
-import java.io.IOException
 
-suspend fun <T, G> handleBoundaryFlow(
+suspend fun <T> getDataFromDatabase(
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    executeApi: suspend () -> Response<T>,
-    executeLocalSource: suspend () -> G?,
-    saveLocalSource: suspend (G) -> Unit,
-    processBeforeSave: (T) -> G
-): ResourceState<G> {
+    execute: suspend () -> T
+): T {
+    return withContext(dispatcher) {
+        execute()
+    }
+}
+
+suspend fun <T> setDataInDatabase(
+    dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    data: T,
+    execute: suspend (T) -> Unit
+) {
+    withContext(dispatcher) {
+        execute(data)
+    }
+}
+
+suspend fun <T, V> handleApi(
+    dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    execute: suspend () -> Response<T>,
+    processResponse: suspend (T) -> V
+): ResourceState<V> {
     return try {
         withContext(dispatcher) {
-            val responseLocalSource = executeLocalSource()
-            if (responseLocalSource != null)
-                ResourceState.Success(responseLocalSource)
-            else {
-                val responseApi = executeApi()
-                val body = responseApi.body()
-                if (responseApi.isSuccessful && body != null) {
-                    val bodyToLocalSource = processBeforeSave(body)
-                    if (bodyToLocalSource != null) saveLocalSource(bodyToLocalSource)
-                    ResourceState.Success(bodyToLocalSource)
-                } else {
-                    ResourceState.Error.ApiError(
-                        code = responseApi.code(),
-                        message = responseApi.message()
-                    )
-                }
+            val responseApi = execute()
+            val body = responseApi.body()
+            if (responseApi.isSuccessful && body != null) {
+                val bodyProcessed = processResponse(body)
+                ResourceState.Success(bodyProcessed)
+            } else {
+                ResourceState.Error.ApiError(
+                    code = responseApi.code(),
+                    message = responseApi.message()
+                )
             }
         }
     } catch (throwable: Throwable) {
-        ResourceState.Error.ExceptionError(message = throwable.message ?: "Exception on fetch users")
+        ResourceState.Error.ExceptionError(
+            message = throwable.message ?: "General Exception"
+        )
     }
 }
