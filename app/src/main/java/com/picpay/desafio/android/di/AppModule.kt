@@ -6,6 +6,8 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.picpay.desafio.android.data.local.PicPayDatabase
 import com.picpay.desafio.android.data.network.PicPayService
+import com.picpay.desafio.android.data.repository.IUserRepository
+import com.picpay.desafio.android.data.repository.UserRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -57,6 +59,21 @@ object AppModule {
 
     @Singleton
     @Provides
+    fun providesUserDao(picPayDatabase: PicPayDatabase) = picPayDatabase.userDao()
+
+    @Singleton
+    @Provides
     fun providesDispatcherIo(): CoroutineDispatcher = Dispatchers.IO
+
+    @Singleton
+    @Provides
+    fun providesUserRepository(
+        dispatcher: CoroutineDispatcher,
+        picPayService: PicPayService,
+        picPayDatabase: PicPayDatabase
+    ): IUserRepository = UserRepository(
+        dispatcher = dispatcher,
+        picPayService = picPayService,
+        userDao = picPayDatabase.userDao())
 
 }

@@ -73,19 +73,18 @@ class UserFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.error.collect { error ->
                     when (error) {
-                        is ResourceState.Error.ApiError -> handleError()
-                        is ResourceState.Error.ExceptionError -> handleError()
+                        is ResourceState.Error.ApiError -> handleError(error.message)
+                        is ResourceState.Error.ExceptionError -> handleError(error.message)
                     }
                 }
             }
         }
     }
 
-    private fun handleError() {
+    private fun handleError(message: String? = getString(R.string.error)) {
         progressBar.visibility = View.GONE
         recyclerView.visibility = View.GONE
 
-        val message = getString(R.string.error)
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT)
             .show()
     }

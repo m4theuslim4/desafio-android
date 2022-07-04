@@ -39,7 +39,7 @@ suspend fun <T, V> handleApi(
             } else {
                 ResourceState.Error.ApiError(
                     code = responseApi.code(),
-                    message = responseApi.message()
+                    message = responseApi.errorBody()?.toObject()
                 )
             }
         }
