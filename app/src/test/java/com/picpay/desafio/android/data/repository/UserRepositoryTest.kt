@@ -6,6 +6,10 @@ import com.picpay.desafio.android.data.local.user.User
 import com.picpay.desafio.android.data.local.user.UserDao
 import com.picpay.desafio.android.data.local.user.UserLocalData
 import com.picpay.desafio.android.data.network.PicPayService
+import com.picpay.desafio.android.utils.MockHelper
+import com.picpay.desafio.android.utils.MockHelper.ERROR_CODE
+import com.picpay.desafio.android.utils.MockHelper.ERROR_MESSAGE
+import com.picpay.desafio.android.utils.MockHelper.ERROR_MESSAGE_ESCAPED
 import com.picpay.desafio.android.utils.ResourceState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,10 +43,7 @@ class UserRepositoryTest {
 
     @Test
     fun whenHasUsersInDatabase_Expected_Success() = runTest {
-        val user1 = UserLocalData(id = 1, name = "user1", img = "", username = "user1_username")
-        val user2 = UserLocalData(id = 2, name = "user2", img = "", username = "user2_username")
-        val user3 = UserLocalData(id = 3, name = "user3", img = "", username = "user3_username")
-        val usersLocalData = listOf(user1, user2, user3)
+        val usersLocalData = MockHelper.generateUsersLocalDataMock(3)
         `when`(userDao.getUsers()).thenReturn(usersLocalData)
 
         assertEquals(usersLocalData, (userRepository.getUsers() as ResourceState.Success).data)
@@ -50,36 +51,43 @@ class UserRepositoryTest {
 
     @Test
     fun whenFetchUsersFromApi_Expected_Success() = runTest {
-        val user1 = User(id = 1, name = "user1", img = "", username = "user1_username")
-        val user2 = User(id = 2, name = "user2", img = "", username = "user2_username")
-        val user3 = User(id = 3, name = "user3", img = "", username = "user3_username")
-        val usersFromApi = listOf(user1, user2, user3)
+        val usersFromApi = MockHelper.generateUsersMock(3)
         `when`(userDao.getUsers()).thenReturn(listOf())
         `when`(picPayService.fetchUsers()).thenReturn(Response.success(usersFromApi))
 
         val response = userRepository.getUsers()
 
         assertTrue(response is ResourceState.Success)
-        assertEquals(usersFromApi[0].username,(userRepository.getUsers() as ResourceState.Success).data[0].username)
-        assertEquals(usersFromApi[1].username,(userRepository.getUsers() as ResourceState.Success).data[1].username)
-        assertEquals(usersFromApi[2].username,(userRepository.getUsers() as ResourceState.Success).data[2].username)
+        assertEquals(
+            usersFromApi[0].username,
+            (userRepository.getUsers() as ResourceState.Success).data[0].username
+        )
+        assertEquals(
+            usersFromApi[1].username,
+            (userRepository.getUsers() as ResourceState.Success).data[1].username
+        )
+        assertEquals(
+            usersFromApi[2].username,
+            (userRepository.getUsers() as ResourceState.Success).data[2].username
+        )
     }
 
     @Test
     fun whenFetchUsersFromApi_Expected_Error() = runTest {
         `when`(userDao.getUsers()).thenReturn(listOf())
-        `when`(picPayService.fetchUsers()).thenReturn(Response.error(404, "\"Not found\"".toResponseBody()))
+        `when`(picPayService.fetchUsers()).thenReturn(
+            Response.error(ERROR_CODE, ERROR_MESSAGE_ESCAPED.toResponseBody()))
 
         val response = userRepository.getUsers()
 
         assertTrue(response is ResourceState.Error.ApiError)
-        assertEquals("Not found", (response as ResourceState.Error).message)
-        assertEquals(404, (response as ResourceState.Error).code)
+        assertEquals(ERROR_MESSAGE, (response as ResourceState.Error).message)
+        assertEquals(ERROR_CODE, response.code)
     }
 
     @Test
     fun whenApiThrowException_Expected_Error() = runTest {
-        val throwable = Throwable("Test Throwable error message")
+        val throwable = Throwable(ERROR_MESSAGE)
         `when`(userDao.getUsers()).thenReturn(listOf())
         given(picPayService.fetchUsers()).willAnswer {
             throw throwable

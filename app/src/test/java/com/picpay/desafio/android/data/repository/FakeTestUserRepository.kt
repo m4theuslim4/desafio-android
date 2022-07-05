@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
-class FakeUserRepository(
+class FakeTestUserRepository(
     private val dispatcher: CoroutineDispatcher
 ) : IUserRepository {
 

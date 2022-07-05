@@ -2,8 +2,10 @@ package com.picpay.desafio.android.ui.user
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
-import com.picpay.desafio.android.data.local.user.UserLocalData
-import com.picpay.desafio.android.data.repository.FakeUserRepository
+import com.picpay.desafio.android.data.repository.FakeTestUserRepository
+import com.picpay.desafio.android.utils.MockHelper
+import com.picpay.desafio.android.utils.MockHelper.ERROR_CODE
+import com.picpay.desafio.android.utils.MockHelper.ERROR_MESSAGE
 import com.picpay.desafio.android.utils.ResourceState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
@@ -19,14 +21,14 @@ import org.junit.runners.JUnit4
 class UserViewModelTest {
 
     private lateinit var userViewModel: UserViewModel
-    private lateinit var userRepository: FakeUserRepository
+    private lateinit var userRepository: FakeTestUserRepository
 
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
 
-        userRepository = FakeUserRepository(Dispatchers.IO)
+        userRepository = FakeTestUserRepository(Dispatchers.IO)
 
         userViewModel = UserViewModel(
             savedStateHandle = SavedStateHandle(),
@@ -59,12 +61,10 @@ class UserViewModelTest {
 
     @Test
     fun whenUsersNotFetched_Expected_Error() = runTest {
-        val code = 404
-        val message = "Api error test"
         userRepository.apply {
             setReturnError(true)
-            setCode(code)
-            setMessage(message)
+            setCode(ERROR_CODE)
+            setMessage(ERROR_MESSAGE)
         }
 
         userViewModel.error.test {
@@ -73,17 +73,16 @@ class UserViewModelTest {
             val errorStatus = awaitItem()
 
             assert(errorStatus is ResourceState.Error.ApiError)
-            assertEquals(code, errorStatus.code)
-            assertEquals(message, errorStatus.message)
+            assertEquals(ERROR_CODE, errorStatus.code)
+            assertEquals(ERROR_MESSAGE, errorStatus.message)
         }
     }
 
     @Test
     fun whenThrowException_Expected_Error() = runTest {
-        val message = "Exception test error"
         userRepository.apply {
             setThrowException(true)
-            setMessage(message)
+            setMessage(ERROR_MESSAGE)
         }
 
         userViewModel.error.test {
@@ -92,18 +91,14 @@ class UserViewModelTest {
             val errorStatus = awaitItem()
 
             assert(errorStatus is ResourceState.Error.ExceptionError)
-            assertEquals(message, errorStatus.message)
+            assertEquals(ERROR_MESSAGE, errorStatus.message)
             assert(errorStatus.code == null)
         }
     }
 
     @Test
     fun whenDataFetched_Expected_Success() = runTest {
-        val data = listOf(
-            UserLocalData(id = 1, name = "user1", img = "", username = "user1_username"),
-            UserLocalData(id = 2, name = "user2", img = "", username = "user2_username"),
-            UserLocalData(id = 3, name = "user3", img = "", username = "user3_username")
-        )
+        val data = MockHelper.generateUsersLocalDataMock(3)
         userRepository.insertUsers(data)
 
         userViewModel.usersData.test {

@@ -55,16 +55,16 @@ class UserFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.usersData.collect {
-                    adapter.users = it
+                viewModel.usersData.collect { users ->
+                    adapter.users = users
                 }
             }
 
         }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isLoading.collect {
-                    progressBar.visibility = if (it) View.VISIBLE else View.GONE
+                viewModel.isLoading.collect { isLoading ->
+                    progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
                 }
             }
         }

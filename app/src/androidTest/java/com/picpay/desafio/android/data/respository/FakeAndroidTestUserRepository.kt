@@ -8,7 +8,7 @@ import com.picpay.desafio.android.utils.wrapEspressoIdlingResource
 import kotlinx.coroutines.*
 import java.util.concurrent.CountDownLatch
 
-class FakeUserRepository(
+class FakeAndroidTestUserRepository(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : IUserRepository {
 
@@ -18,10 +18,14 @@ class FakeUserRepository(
     private var message: String = ""
     private val usersData = mutableListOf<UserLocalData>()
 
+    companion object {
+        const val DELAY = 1_000L
+    }
+
     override suspend fun getUsers(): ResourceState<List<UserLocalData>> {
         wrapEspressoIdlingResource {
             return withContext(dispatcher) {
-                delay(1_000)
+                delay(DELAY)
                 if (shouldReturnError) return@withContext ResourceState.Error.ApiError(code, message)
 
                 if (shouldThrowException) return@withContext ResourceState.Error.ExceptionError(message)

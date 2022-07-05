@@ -10,9 +10,12 @@ import androidx.test.filters.LargeTest
 import com.picpay.desafio.android.R
 import com.picpay.desafio.android.utils.RecyclerViewMatchers
 import com.picpay.desafio.android.data.local.user.UserLocalData
-import com.picpay.desafio.android.data.respository.FakeUserRepository
+import com.picpay.desafio.android.data.respository.FakeAndroidTestUserRepository
 import com.picpay.desafio.android.utils.launchFragmentInHiltContainer
 import com.picpay.desafio.android.utils.CountingIdlingResourceSingleton
+import com.picpay.desafio.android.utils.MockHelper
+import com.picpay.desafio.android.utils.MockHelper.ERROR_CODE
+import com.picpay.desafio.android.utils.MockHelper.ERROR_MESSAGE
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -33,7 +36,7 @@ class UserFragmentTest {
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
 
-    private var userRepository: FakeUserRepository = FakeUserRepository()
+    private var userRepository: FakeAndroidTestUserRepository = FakeAndroidTestUserRepository()
 
     @BindValue
     @JvmField
@@ -51,11 +54,7 @@ class UserFragmentTest {
 
     @Test
     fun usersFetchSuccess_validateUsersList() {
-        val data = listOf(
-            UserLocalData(id = 1, name = "user1", img = "", username = "user1_username"),
-            UserLocalData(id = 2, name = "user2", img = "", username = "user2_username"),
-            UserLocalData(id = 3, name = "user3", img = "", username = "user3_username")
-        )
+        val data = MockHelper.generateUsersLocalDataMock(3)
         userRepository.insertUsers(data)
 
         launchFragmentInHiltContainer<UserFragment>(themeResId = R.style.AppTheme)
@@ -71,12 +70,10 @@ class UserFragmentTest {
 
     @Test
     fun usersFetchError_validateErrorMessage() {
-        val code = 404
-        val message = "Error test message"
         userRepository.apply {
             setReturnError(true)
-            setCode(code)
-            setMessage(message)
+            setCode(ERROR_CODE)
+            setMessage(ERROR_MESSAGE)
         }
 
         launchFragmentInHiltContainer<UserFragment>(themeResId = R.style.AppTheme)
@@ -88,10 +85,9 @@ class UserFragmentTest {
 
     @Test
     fun usersFetchException_validateErrorMessage() {
-        val message = "Error Exception"
         userRepository.apply {
             setThrowException(true)
-            setMessage(message)
+            setMessage(ERROR_MESSAGE)
         }
     }
 
